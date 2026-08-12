@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Match Engine — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --ink-soft:#2A3A5C;
+    --paper:#F8F6F2;
+    --panel:#FFFFFF;
+    --gold:#C89B3C;
+    --teal:#2A6F77;
+    --decline:#B0562E;
+    --approve:#3F7D58;
+    --text-muted:#6B7280;
+    --line:#E4E0D8;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px;}
+
+  /* Header */
+  header{margin-bottom:36px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--teal);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,4vw,42px);
+    line-height:1.1;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--text-muted);
+    font-size:15px;
+    max-width:560px;
+    line-height:1.55;
+    margin:0;
+  }
+
+  /* Party strip */
+  .parties{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin:32px 0;
+  }
+  .party{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .party-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:6px;
+  }
+  .party-title{font-weight:600;font-size:14.5px;margin-bottom:2px;}
+  .party-sub{font-size:12.5px;color:var(--text-muted);}
+
+  /* Controls */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    margin-bottom:20px;
+  }
+  .panel h2{
+    font-family:'Fraunces',serif;
+    font-size:18px;
+    font-weight:500;
+    margin:0 0 18px;
+  }
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:flex;justify-content:space-between;
+    font-size:13px;font-weight:600;margin-bottom:8px;
+  }
+  .field label span.val{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--teal);font-weight:600;
+  }
+  input[type=range]{
+    width:100%;height:4px;border-radius:2px;
+    background:var(--line);appearance:none;-webkit-appearance:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    appearance:none;-webkit-appearance:none;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--ink);cursor:pointer;border:2px solid var(--paper);
+    box-shadow:0 0 0 1px var(--ink);
+  }
+  .pill-group{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{
+    padding:8px 14px;border-radius:999px;border:1px solid var(--line);
+    font-size:13px;font-weight:500;cursor:pointer;background:var(--paper);
+    color:var(--ink-soft);transition:all .15s ease;
+  }
+  .pill.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .run-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:var(--radius);
+    background:var(--ink);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    letter-spacing:0.01em;
+    transition:background .15s ease;
+    margin-top:8px;
+  }
+  .run-btn:hover{background:var(--ink-soft);}
+
+  /* Results */
+  .results-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin:34px 0 16px;
+  }
+  .results-head h2{
+    font-family:'Fraunces',serif;font-weight:500;font-size:20px;margin:0;
+  }
+  .results-meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+
+  .deal-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px 26px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .deal-card.top::before{
+    content:"";position:absolute;top:0;left:0;bottom:0;width:4px;background:var(--gold);
+  }
+  .deal-top-row{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:16px;flex-wrap:wrap;gap:10px;
+  }
+  .deal-name-row{display:flex;align-items:center;gap:10px;}
+  .rank-badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;font-weight:600;
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);
+  }
+  .deal-card.top .rank-badge{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .deal-name{font-family:'Fraunces',serif;font-size:19px;font-weight:500;}
+  .deal-tag{
+    font-size:11px;font-family:'JetBrains Mono',monospace;
+    color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;
+  }
+  .deal-figs{display:flex;gap:22px;align-items:baseline;}
+  .fig{text-align:right;}
+  .fig .n{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;}
+  .fig .l{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em;}
+
+  .status{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;
+    margin-bottom:16px;
+  }
+  .status.approve{background:#EAF3EC;color:var(--approve);}
+  .status.decline{background:#F7E9E1;color:var(--decline);}
+  .status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+  .shap-label{
+    font-size:12px;font-weight:600;color:var(--text-muted);
+    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;
+  }
+  .shap-row{display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+  .shap-row .reason{font-size:13px;width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .shap-track{flex:1;height:8px;background:var(--paper);border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+  .shap-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:4px;transition:width .5s ease;}
+  .shap-pct{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+    width:38px;text-align:right;color:var(--ink);
+  }
+
+  footer{
+    margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;
+  }
+
+  @media (max-width:640px){
+    .parties{grid-template-columns:1fr;}
+    .deal-figs{gap:14px;}
+    .shap-row .reason{width:130px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Post-Kata build prototype - by Akshansh Rajora</div>
+    <h1>Deal Match Engine</h1>
+    <p>A working sketch of the ranking + explainability layer from the "Right Car, Right Product, Right Time" Kata. Three parties feed one model, the top match comes back with a plain-language reason, not a black-box score.</p>
+  </header>
+
+  <div class="parties">
+    <div class="party">
+      <div class="party-label">Customer</div>
+      <div class="party-title">Budget &amp; lifestyle</div>
+      <div class="party-sub">Monthly budget, deposit, household size</div>
+    </div>
+    <div class="party">
+      <div class="party-label">Dealer</div>
+      <div class="party-title">Live stock</div>
+      <div class="party-sub">5 vehicles, price, space, condition</div>
+    </div>
+    <div class="party">
+      <div class="party-label">OTRF</div>
+      <div class="party-title">Approval gate</div>
+      <div class="party-sub">Affordability threshold, responsible lending</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Customer inputs</h2>
+    <div class="field">
+      <label>Monthly budget <span class="val" id="budgetVal">£360</span></label>
+      <input type="range" id="budget" min="150" max="600" step="10" value="360">
+    </div>
+    <div class="field">
+      <label>Household size</label>
+      <div class="pill-group" id="familyPills">
+        <div class="pill" data-val="40">Just me</div>
+        <div class="pill active" data-val="70">Small family</div>
+        <div class="pill" data-val="95">Large family</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>What matters most</label>
+      <div class="pill-group" id="priorityPills">
+        <div class="pill active" data-val="balanced">Balanced</div>
+        <div class="pill" data-val="space">Space</div>
+        <div class="pill" data-val="cost">Lowest cost</div>
+        <div class="pill" data-val="reliability">Reliability</div>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runMatch()">Run AI ranking →</button>
+  </div>
+
+  <div class="results-head">
+    <h2>Ranked matches</h2>
+    <div class="results-meta" id="resultsMeta">10 vehicles scored · OTRF gate applied</div>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>deal-match-engine prototype</footer>
+</div>
+
+<script>
+const cars = [
+  {name:"Ford Puma", tag:"Compact SUV", space:82, reliability:77, priceAttractive:74, monthly:295},
+  {name:"VW Golf", tag:"Hatchback", space:58, reliability:87, priceAttractive:81, monthly:260},
+  {name:"Tesla Model 3", tag:"EV Saloon", space:66, reliability:79, priceAttractive:68, monthly:430},
+  {name:"Skoda Kodiaq", tag:"Large SUV", space:93, reliability:80, priceAttractive:65, monthly:365},
+  {name:"Toyota Yaris", tag:"City Car", space:40, reliability:91, priceAttractive:93, monthly:220},
+  {name:"Nissan Qashqai", tag:"Crossover", space:86, reliability:79, priceAttractive:72, monthly:320},
+  {name:"Peugeot 2008", tag:"Compact SUV", space:78, reliability:74, priceAttractive:76, monthly:285},
+  {name:"Kia Sportage", tag:"Family SUV", space:88, reliability:82, priceAttractive:70, monthly:350},
+  {name:"MG4 EV", tag:"Electric Hatch", space:68, reliability:76, priceAttractive:88, monthly:335},
+  {name:"Mercedes A-Class", tag:"Premium Hatchback", space:62, reliability:81, priceAttractive:60, monthly:410},
+];
+
+let familyTarget = 70;
+let priority = "balanced";
+
+document.querySelectorAll("#familyPills .pill").forEach(p=>{
+  p.onclick = ()=>{
+    document.querySelectorAll("#familyPills .pill").forEach(x=>x.classList.remove("active"));
+    p.classList.add("active");
+    familyTarget = +p.dataset.val;
+  };
+});
+document.querySelectorAll("#priorityPills .pill").forEach(p=>{
+  p.onclick = ()=>{
+    document.querySelectorAll("#priorityPills .pill").forEach(x=>x.classList.remove("active"));
+    p.classList.add("active");
+    priority = p.dataset.val;
+  };
+});
+
+const budgetSlider = document.getElementById("budget");
+budgetSlider.oninput = ()=>{
+  document.getElementById("budgetVal").textContent = "£" + budgetSlider.value;
+};
+
+function getWeights(){
+  const base = {budget:0.35, family:0.25, reliability:0.20, value:0.20};
+  if(priority==="space") return {budget:0.25, family:0.48, reliability:0.12, value:0.15};
+  if(priority==="cost") return {budget:0.55, family:0.10, reliability:0.10, value:0.25};
+  if(priority==="reliability") return {budget:0.20, family:0.15, reliability:0.50, value:0.15};
+  return base;
+}
+
+function clamp(n){return Math.max(0, Math.min(100, n));}
+
+function runMatch(){
+  const budget = +budgetSlider.value;
+  const weights = getWeights();
+  const scored = cars.map(car=>{
+    const approved = car.monthly <= budget * 1.12;
+    const budgetFit = clamp(100 - Math.abs(car.monthly - budget) / budget * 120);
+    const familyFit = clamp(100 - Math.abs(car.space - familyTarget));
+    const reliabilityFit = car.reliability;
+    const valueFit = car.priceAttractive;
+
+    const contributions = {
+      "Fits budget": weights.budget * budgetFit,
+      "Matches household size": weights.family * familyFit,
+      "Reliability track record": weights.reliability * reliabilityFit,
+      "Best monthly value": weights.value * valueFit,
+    };
+    const total = Object.values(contributions).reduce((a,b)=>a+b,0);
+    const shap = Object.entries(contributions).map(([label,val])=>({
+      label, pct: total>0 ? Math.round(val/total*100) : 0
+    })).sort((a,b)=>b.pct-a.pct);
+
+    return {...car, score: Math.round(total), approved, shap};
+  });
+
+  scored.sort((a,b)=> (b.approved-a.approved) || (b.score-a.score));
+
+  const el = document.getElementById("results");
+  el.innerHTML = "";
+  scored.forEach((car, i)=>{
+    const card = document.createElement("div");
+    card.className = "deal-card" + (i===0 && car.approved ? " top" : "");
+    card.innerHTML = `
+      <div class="deal-top-row">
+        <div class="deal-name-row">
+          <div class="rank-badge">${i+1}</div>
+          <div>
+            <div class="deal-name">${car.name}</div>
+            <div class="deal-tag">${car.tag}</div>
+          </div>
+        </div>
+        <div class="deal-figs">
+          <div class="fig"><div class="n">£${car.monthly}</div><div class="l">per month</div></div>
+          <div class="fig"><div class="n">${car.score}</div><div class="l">match score</div></div>
+        </div>
+      </div>
+      <div class="status ${car.approved ? 'approve':'decline'}">
+        ${car.approved ? 'OTRF approved' : 'Needs alternative structure'}
+      </div>
+      <div class="shap-label">Why this ranking (SHAP-style breakdown)</div>
+      ${car.shap.map(s=>`
+        <div class="shap-row">
+          <div class="reason">${s.label}</div>
+          <div class="shap-track"><div class="shap-fill" style="width:${s.pct}%"></div></div>
+          <div class="shap-pct">${s.pct}%</div>
+        </div>
+      `).join("")}
+    `;
+    el.appendChild(card);
+  });
+
+  document.getElementById("resultsMeta").textContent =
+    `${scored.filter(c=>c.approved).length} of ${scored.length} approved by OTRF gate · re-ranked`;
+}
+
+runMatch();
+</script>
+</body>
+</html>
